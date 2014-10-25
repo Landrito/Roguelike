@@ -6,7 +6,6 @@ using namespace std;
 
 //Board Sizes
 const int BOARD_X_SIZE = 81; //this is size 81 to account for the null char at the end of stirngs
-//V: i dont like that. youre letting view concerns spread their evil tendrils into the rest of your program.
 const int BOARD_Y_SIZE = 23;
 
 enum direction {NO_DIRECTION, UP, DOWN, LEFT, RIGHT};
@@ -20,10 +19,10 @@ public:
 	//I will add these things soon
 	goblin();
 	goblin(const goblin & src);
-	goblin& operator=(const goblin & src); //V: i prefer returning void, but thats just my personal taste
+	goblin& operator=(const goblin & src);
 	~goblin();
 	goblin(int x, int y);
-	int goblinAI( const game & src ); //V: should be const this
+	int goblinAI( const game & src );
 
 //private: 
 //I will turn this into a private data member soon, I didn't have enough time to finish it this time =/
@@ -51,9 +50,8 @@ public:
 private:
 	int playerXPos;
 	int playerYPos;
-	vector<goblin> goblins; //V: i prefer pointers here, so we dont run into trouble when deleting one goblin (thus changing the addresses of the rest of the goblins)
+	vector<goblin> goblins;
 	char board[BOARD_Y_SIZE][BOARD_X_SIZE];
-	//V: i prefer the const approach we talked about in hangouts, to reduce state
 };
 
 
@@ -63,7 +61,7 @@ int main()
 	game myGame;
 
 	//Start the game if the level was loaded correctly
-	if( myGame.loadLevel() ) //V: personally i prefer to put this in a boolean var and then test the boolean, since i dislike having any writes inside an if-condition, but thats just me. putting writes in an if-condition is common practice, unfortunately
+	if( myGame.loadLevel() )
 	{
 		//initialize the character to hold the command
 		char command = '\n';
@@ -75,8 +73,6 @@ int main()
 			std::cout << "Up(a) Left(a) Down(s) Right(d) Exit(x)    " 
 					  << "Enter Your Command:";
 			std::cin >> command;
-
-			//V: if user typed X, we're still moving the player and updating goblins, i dont like that
 
 			myGame.movePlayer(command);
 			myGame.printBoard();
@@ -108,16 +104,13 @@ game::game()
 
 			//Place an empty spot if nothing special
 			else
-				this->board[i][j] = '.'; //V: define these characters somewhere, theyre basically magic numbers
+				this->board[i][j] = '.';
 		}
 	}
 	//Place the player in his position as well
 	board[playerYPos][playerXPos] = '@';
 }
 
-//V: get rid of this entire function, we dont need it and so we shouldnt have it around.
-//if we ever do decide to need it, we can add it in then. until then, its just more stuff
-//we have to test, maintain, and read.
 game::game(const game & src) 
 	: playerXPos( src.playerXPos ), playerYPos( src.playerYPos )
 {
@@ -134,7 +127,7 @@ game& game::operator=(const game & src)
 	this->playerYPos = src.playerYPos;
 
 	for(int i = 0; i < BOARD_Y_SIZE; i++)
-		strcpy(this->board[i], src.board[i]); //V: ive changed my mind about this->. use the m prefix intead, like mBoard
+		strcpy(this->board[i], src.board[i]);
 
 	return *this;
 }
@@ -147,11 +140,8 @@ bool game::canMove(const int & xDelta, const int & yDelta) const
 	if( playerXPos + xDelta >= BOARD_X_SIZE ||
 		playerXPos + xDelta < 0 ||
 		playerYPos + yDelta > BOARD_Y_SIZE ||
-		playerYPos + yDelta < 0) {
-		//V: i would also put an assert here, so the game will bring it to our attention if
-		//your above expectations are ever violated (happens all the time when youre on a team)
+		playerYPos + yDelta < 0)
 		return false;
-	}
 	
 	//The player can move if the space is open ('.')
 	else
@@ -196,7 +186,7 @@ bool game::movePlayer(char command)
 	return false;
 }
 
-void game::moveGoblin(int direction, const goblin gob) //V: should be either goblin gob or const goblin & gob. const goblin gob doesnt make sense
+void game::moveGoblin(int direction, const goblin gob)
 {
 		//initialize the deltas
 	int xDelta = 0;
@@ -274,7 +264,6 @@ bool game::loadLevel()
 	strcpy(board[21], "#.....................#........................................................#");
 	strcpy(board[22], "################################################################################");
 
-	//V: seems like this information is redundant with the above map
 	playerXPos = 34;
 	playerYPos = 8;
 
@@ -282,9 +271,6 @@ bool game::loadLevel()
 	return true;
 }
 
-//V: might want to make this const, and return its action to the game, so the game can
-//decide whether or not to do the goblin AI (its debatable). or at least, split this into two functions:
-//one that figures out what to do, and then one that modifies the state.
 int goblin::goblinAI( const game & src )
 {
 	int direction = rand() % 4 + 1;
@@ -316,13 +302,11 @@ int goblin::goblinAI( const game & src )
 	return NO_DIRECTION;
 }
 
-//V: for name, id prefer locationIsFree or tileIsFree or something
 bool game::isFree(int xPos, int yPos) const
 {
 	return board[yPos][xPos] == '.';
 }
 
-//V: shouldnt be hardcoding these. in fact, get rid of this entire constructor.
 goblin::goblin() : goblinXPos(1), goblinYPos(2) {}
 
 goblin::goblin(const goblin & src) : goblinXPos(src.goblinXPos), goblinYPos(src.goblinYPos) {}
