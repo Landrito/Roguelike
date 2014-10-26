@@ -9,8 +9,6 @@
       In addition to that the goblin can convert walls from '#' to '.'
       I'm guessing if you first fix the above issue, this will fix itself too.
       There is also no collision detection between the player and the goblin.
-      Edit: Actually the player can't move on top of a goblin, but I feel there 
-      should be more to it, such as the player dying as a result.
 */
 
 #include <iostream>
