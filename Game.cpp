@@ -11,6 +11,9 @@
       There is also no collision detection between the player and the goblin.
       Edit: Actually the player can't move on top of a goblin, but I feel there 
       should be more to it, such as the player dying as a result.
+      
+      Another note, you use literals like '.', '#', and '@' along with 'w' 'a', 's', 'd'
+      that should probably be declared as constants.
 */
 
 #include <iostream>
@@ -22,6 +25,8 @@
 using namespace std; //M: Bit of a nitpick, but it's bad practice to do this.
 
 //Board Sizes
+//M: I would avoid storing the board as a set of strings as it should
+//   be a 2d array of chars, not a 1d array of char strings in the way we use it.
 const int BOARD_X_SIZE = 81; //this is size 81 to account for the null char at the end of stirngs
 const int BOARD_Y_SIZE = 23;
 
@@ -38,11 +43,9 @@ public:
 	goblin(const goblin & src);
 	
 	//M: Do you need an assignment operator for goblins?
-	//It seems unnecessary as goblins should
-	//be unique and this would create a clone.
-	//Evan said not to add unnecessary code.
-	//If you have a good reason why, then nevermind.
-	//Same thing with the copy constructor.
+	//   It seems unnecessary as goblins should be unique and this would create a clone.
+	//   Evan said not to add unnecessary code. If you have a good reason why, then nevermind.
+	//   Same thing with the copy constructor.
 	goblin& operator=(const goblin & src);
 	~goblin();
 	goblin(int x, int y);
@@ -86,7 +89,7 @@ int main()
 
 	//Start the game if the level was loaded correctly
 	//M: If you go through the trouble of checking to see if the level
-	//loads correctly, then you should at least add an error message if it doesn't.
+	//   loads correctly, then you should at least add an error message if it doesn't.
 	if( myGame.loadLevel() )
 	{
 		//initialize the character to hold the command
@@ -113,9 +116,6 @@ int main()
 
 
 //constructor to keep things safe
-//M: This seems like a lot of work that does not help with errors.
-//Sure, if you forget to read in a map this will load a blank default map,
-//but the game will still be broken and unplayable regardless.
 game::game() 
 	: playerXPos(BOARD_X_SIZE / 2), playerYPos(BOARD_Y_SIZE / 2)
 {
@@ -310,6 +310,12 @@ int goblin::goblinAI( const game & src )
 	//initialize the deltas
 	int xDelta = 0;
 	int yDelta = 0; 
+
+	//M: I'm not sure if using an ENUM is appropriate here.
+	//   What if you later change the ENUM, but you don't update the code here?
+	//   The problem is that you are taking an int and treating it as an ENUM,
+	//   which works in this case, but is probably a bad idea.
+	//   Double check with Evan though, but it just feels wrong.
 
 	//change the deltas based on the inputted command 
 	if(direction == UP)
