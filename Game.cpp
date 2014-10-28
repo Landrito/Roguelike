@@ -14,6 +14,10 @@
       
       Another note, you use literals like '.', '#', and '@' along with 'w' 'a', 's', 'd'
       that should probably be declared as constants.
+      
+      
+      Speaking of constants you use UP to mean delataY = -1, RIGHT to mean delataX = 1, and so on in several places.
+      It would probably be a good idea to make those constants with something like const int UP_DIRECTION = -1;
 */
 
 #include <iostream>
@@ -65,10 +69,15 @@ public:
 	~game();
 	game& operator=(const game & src);
 
-	bool loadLevel();
+	bool loadLevel();//M: I feel that this should take in some sort of parameter in the case
+	                 //   you want to future proof things as you will want to specify what level to load.
+	                 
+	//M: passing a const int & doesn't make a lot of sense as you can pass a copy with foo(int a)
+	//   that cannot be changed outside of the function anyway.
 	bool canMove(const int & xDelta, const int & yDelta) const;
+	
 	bool movePlayer(char command);
-	void moveGoblin(int direction, const goblin gob);
+	void moveGoblin(int direction, const goblin gob); //M: This seems like something that should be in the goblin class
 	bool isFree(int xPos, int yPos) const;
 	void updateGoblins();
 	void printBoard() const;
@@ -77,7 +86,8 @@ public:
 private:
 	int playerXPos;
 	int playerYPos;
-	vector<goblin> goblins;
+	vector<goblin> goblins; //M: Should be goblin pointer in case other functions refer to a goblin by address
+	                        //   and you remove a goblin from the vector.
 	char board[BOARD_Y_SIZE][BOARD_X_SIZE];
 };
 
@@ -116,6 +126,10 @@ int main()
 
 
 //constructor to keep things safe
+//M: This seems like a lot of code that may mask problems instead of doing something about them.
+//   If something fails, you should know early instead of later.
+//   For example your loadLevel function does not properly read in the player location,
+//   but instead uses this default. For an actual release that might be good, but for testing it is a problem.
 game::game() 
 	: playerXPos(BOARD_X_SIZE / 2), playerYPos(BOARD_Y_SIZE / 2)
 {
@@ -169,6 +183,9 @@ bool game::canMove(const int & xDelta, const int & yDelta) const
 	//This is just for safety, As long as the player starts within the boumds, it shouldn't work
 	//The case where this will save our program would be if the programmer initializes a game and
 	//something messes up and puts the player x and the player y
+	
+	//M: If this is something that should not happen under normal circumstances, then it makes
+	//   sense to add 
 	if( playerXPos + xDelta >= BOARD_X_SIZE ||
 		playerXPos + xDelta < 0 ||
 		playerYPos + yDelta > BOARD_Y_SIZE ||
@@ -201,6 +218,11 @@ bool game::movePlayer(char command)
 
 	if( canMove(xDelta, yDelta) )
 	{
+		//M: Instead of creating a print function that prints at the actual location, you instead do this
+		//   which is just asking for trouble as it may not represent
+		//   the actual player location and be very difficult to debug.
+		//   No one ever assumes the print function is broken until everything else is checked.
+		
 		//change where the player is to a period
 		board[playerYPos][playerXPos] = '.';
 
@@ -218,8 +240,14 @@ bool game::movePlayer(char command)
 	return false;
 }
 
+//M: Should be "const goblin &gob" as you are creating a copy for no reason otherwise
 void game::moveGoblin(int direction, const goblin gob)
 {
+	//M: This function should not exist!!! The only reason it exists is because
+	//   of your flawed printing method. The overall dynamic between moveGoblin
+	//   and goblinAI just seems flawed. Not only do you have an extra state as a result,
+	//   it also prevents your code from being properly decoupled.
+	
 	//initialize the deltas
 	int xDelta = 0;
 	int yDelta = 0; 
@@ -248,6 +276,7 @@ void game::updateGoblins()
 {
 	for( int i = 0; i < goblins.size(); i++)
 	{
+		//M: I really don't like the looks of this function call
 		moveGoblin( goblins[i].goblinAI(*this), goblins[i] );
 	}
 
@@ -263,6 +292,9 @@ void game::printBoard() const
 		std::cout << board[i] <<  std::endl;		
 }
 
+//M: You set this up as a temporary function, but you don't use it anywhere.
+//   Instead in main you check to see if the player pressed 'x' to determine
+//   whether the game is over or not.
 bool game::isDone() const
 {
 	//The functionality of this can be changed later
@@ -272,6 +304,8 @@ bool game::isDone() const
 //I put this at the bottom cause it's super distracting LOL
 bool game::loadLevel()
 {
+	//M: Already pointed this out earlier, but you really shouldn't be storing non-terrain data
+	//   with the terrain.
 	strcpy(board[0], "################################################################################");
 	strcpy(board[1], "#g...........#..................................#............#.................#");
 	strcpy(board[2], "#............#.#................................#............#.................#");
@@ -305,6 +339,10 @@ bool game::loadLevel()
 
 int goblin::goblinAI( const game & src )
 {
+	//M: You never explicitly initalize srand, which is good and bad.
+	//   Bad as in you should initalize it to make it actually pseudorandom.
+	//   Good as in now your game will play the same way every time for testing
+	//   as srand(1) is implicitly called.
 	int direction = rand() % 4 + 1;
 
 	//initialize the deltas
@@ -345,7 +383,7 @@ bool game::isFree(int xPos, int yPos) const
 	return board[yPos][xPos] == '.';
 }
 
-goblin::goblin() : goblinXPos(1), goblinYPos(2) {}
+goblin::goblin() : goblinXPos(1), goblinYPos(2) {} //M: These initalization values don't seem to have any meaning
 
 goblin::goblin(const goblin & src) : goblinXPos(src.goblinXPos), goblinYPos(src.goblinYPos) {}
 
